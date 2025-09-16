@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>松蔭大学看護学部　看護関係法令</title>
+  <style>
+    :root {
+      --cover-bg: #FFF9C4; /* 薄い黄色 */
+      --ink: #222;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --radius: 20px;
+      --wrong: #dc2626;   /* 赤（不正解） */
+      --correct: #16a34a; /* 緑（正解） */
+      --pending: #dbeafe; /* 選択中の淡青 */
+      --pending-ring: rgba(37,99,235,.35);
+      --title-color: #38bdf8; /* 水色 */
+    }
+    *{box-sizing:border-box}
+    html, body { height: 100%; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", Helvetica, Arial;
+      margin: 0; background: #f8fafc; color: var(--ink);
+    }
+
+    .wrap { min-height: 100vh; display: flex; }
+    .container { flex: 1; display: flex; align-items: stretch; justify-content: center; padding: 16px; }
+    .stage { width: 100%; max-width: 860px; display: grid; }
+
+    .screen { display: none; }
+    .screen.active { display: grid; }
+
+    /* Cover */
+    .cover {
+      background: var(--cover-bg);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0,0,0,0.06);
+      padding: clamp(20px, 6vw, 48px);
+      grid-template-rows: auto 1fr auto;
+      display: grid;
+      min-height: calc(100vh - 32px);
+      row-gap: clamp(12px, 3vw, 20px); /* ← タイトル直下の余白を少し縮めた */
+    }
+
+    .title {
+      font-size: clamp(26px, 6.5vw, 38px);
+      font-weight: 800;
+      margin: 0 0 8px 0;   /* ← 下余白を縮めた */
+      text-align: center;
+      color: var(--title-color);
+      line-height: 1.4;
+    }
+    .title span { display: block; }
+
+    .stamp-note {
+      font-weight: 700;
+      margin: 4px 0 4px;
+      font-size: clamp(13px, 3.2vw, 15px);
+      text-align:center;
+    }
+    .stamp-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(12px, 3vw, 22px);      /* ← スタンプ間を広げる */
+      background: rgba(255,255,255,0.7);
+      border: 1px dashed rgba(0,0,0,0.15);
+      border-radius: 12px;
+      padding: clamp(16px, 4vw, 28px);  /* ← ゆとりを持たせる */
+      margin-top: 12px;                 /* ← タイトルとの距離をさらに縮める */
+    }
+    .stamp {
+      font-size: clamp(28px, 8vw, 52px); /* ← スタンプを大きめに */
+      text-align: center;
+      filter: grayscale(1) opacity(.35);
+      transition: .2s;
+    }
+    .stamp.active { filter: none; transform: scale(1.05); }
+
+    .lesson-buttons {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: clamp(10px, 2.6vw, 16px);
+    }
+    @media (min-width: 640px) {
+      .lesson-buttons { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      background: var(--card); padding: clamp(12px, 3vw, 18px);
+      border-radius: 12px; border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-weight: 700; cursor: pointer; text-decoration: none; text-align: center;
+      font-size: clamp(14px, 3.4vw, 16px); min-height: 48px;
+    }
+    .btn:hover { background: #f9fafb; }
+    .btn:disabled { background: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
+
+    /* Panels */
+    .panel {
+      background:#fff; border-radius: var(--radius);
+      box-shadow: 0 4px 16px rgba(0,0,0,.08); border:1px solid rgba(0,0,0,.06);
+      padding: clamp(16px, 4vw, 28px);
+      min-height: calc(100vh - 32px);
+      display:grid; grid-template-rows:auto 1fr auto;
+      row-gap: clamp(12px, 3vw, 20px);
+    }
+    .crumbs { font-size: clamp(13px, 3vw, 15px); margin-bottom: 6px; color: var(--muted); }
+    .panel h2 { margin: 0 0 8px; font-size: clamp(20px, 5vw, 26px); }
+
+    .question { padding: 12px; border-radius: 10px; margin-bottom: 10px; background:#f9fafb; }
+    .options { display:flex; gap:12px; margin-top:8px; }
+    .opt-btn {
+      flex:1; padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.15);
+      background:#fff; cursor:pointer; font-weight:700; text-align:center;
+    }
+    .opt-btn.clicked { background: var(--pending); outline: 2px solid var(--pending-ring); }
+    .opt-btn.wrong { background: var(--wrong); color:#fff; }
+    .opt-btn.correct { background: var(--correct); color:#fff; }
+
+    .review-line { display:flex; align-items:center; justify-content:center; gap:8px; margin-top: 10px; }
+    .badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 6px 10px; border-radius: 999px;
+      background:#ecfdf5; color:#065f46; font-weight: 800;
+      border:1px solid #a7f3d0; font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="container">
+      <div class="stage">
+
+        <!-- Cover -->
+        <section id="cover" class="screen active">
+          <div class="cover">
+            <h1 class="title">
+              <span>松蔭大学看護学部</span>
+              <span>看護関係法令</span>
+            </h1>
+
+            <div class="stamp-note">スタンプ（全8回分）</div>
+            <div class="stamp-grid" id="stampRow"></div>
+
+            <div class="lesson-buttons" id="lessonGrid"></div>
+            <div class="review-line">
+              <button id="reviewBtn" class="btn">📚 総復習ページへ</button>
+              <span id="reviewBadge" class="badge" style="display:none;">100%達成🌸</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lesson -->
+        <section id="lesson" class="screen">
+          <div class="panel">
+            <div>
+              <div class="crumbs">← <a href="#" id="backLink">表紙にもどる</a></div>
+              <h2 id="lessonTitle"></h2>
+            </div>
+            <div id="lessonBody"></div>
+          </div>
+        </section>
+
+        <!-- Review -->
+        <section id="review" class="screen">
+          <div class="panel">
+            <div>
+              <div class="crumbs">← <a href="#" id="backLink2">表紙にもどる</a></div>
+              <h2>総復習ページ（40問）</h2>
+            </div>
+            <div id="reviewBody"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== JSは先生の要望に合わせた最新版を流用 =====
+       - 配信日制御あり（JST +09:00）
+       - 各回全問回答でスタンプ💮
+       - スタンプは消えない
+       - 総復習は8回全て解答後に解禁
+       - 総復習100%で🌸バッジ表示
+    */
+
+    const TOTAL = 8;
+    const STORAGE_KEY = 'nursingLawProgress.v23';
+    let progress = loadProgress();
+    let answersRecord = loadAnswers();
+    let flags = loadFlags();
+
+    const stampRow = document.getElementById('stampRow');
+    const lessonGrid = document.getElementById('lessonGrid');
+    const cover = document.getElementById('cover');
+    const lesson = document.getElementById('lesson');
+    const review = document.getElementById('review');
+    const reviewBtn = document.getElementById('reviewBtn');
+    const reviewBadge = document.getElementById('reviewBadge');
+
+    const normalize = s => (s === '○') ? '〇' : s;
+
+    const sessions = [
+      { release: new Date('2025-09-22T13:05:00+09:00'), questions: [
+        { q:'日本の法の大部分は文字で表すことができる成文法である', ans:'〇' },
+        { q:'保健師助産師看護師法は公法であり、実体法である', ans:'✕' },
+        { q:'法のうち憲法は唯一最高のものである', ans:'〇' },
+        { q:'保健師助産師看護師法は保健衛生法である', ans:'✕' },
+        { q:'看護行政については医政局の看護課が担当している', ans:'〇' },
+      ]},
+      // …以下略、全8回分の問題は元のコードからコピーしてください
+    ];
+
+    function loadProgress() {
+      try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return Array(TOTAL).fill(false); const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length === TOTAL) return arr.map(Boolean); } catch {}
+      return Array(TOTAL).fill(false);
+    }
+    function loadAnswers(){ try{ const raw = localStorage.getItem(STORAGE_KEY+"_answers"); if(!raw) return {}; return JSON.parse(raw);}catch{} return {}; }
+    function loadFlags(){ try{ const raw = localStorage.getItem(STORAGE_KEY+"_flags"); if(!raw) return { reviewPerfect:false }; return JSON.parse(raw);}catch{} return { reviewPerfect:false }; }
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); localStorage.setItem(STORAGE_KEY+"_answers", JSON.stringify(answersRecord)); localStorage.setItem(STORAGE_KEY+"_flags", JSON.stringify(flags)); render(); }
+
+    function renderStamps() {
+      stampRow.innerHTML = '';
+      for (let i = 0; i < TOTAL; i++) {
+        const span = document.createElement('span');
+        span.className = 'stamp' + (progress[i] ? ' active' : '');
+        span.textContent = '💮';
+        stampRow.appendChild(span);
+      }
+    }
+
+    function renderButtons() {
+      lessonGrid.innerHTML = '';
+      const now = new Date();
+      for (let i = 0; i < TOTAL; i++) {
+        const a = document.createElement('a');
+        a.className = 'btn';
+        a.textContent = `📘 第${i+1}回`;
+        a.href = '#';
+        a.dataset.idx = i;
+        const released = !sessions[i].release || now >= sessions[i].release;
+        if (!released) a.disabled = true;
+        a.addEventListener('click', (e)=>{
+          e.preventDefault();
+          openLesson(i);
+        });
+        lessonGrid.appendChild(a);
+      }
+    }
+
+    function renderReviewButton() {
+      reviewBtn.disabled = !progress.every(Boolean);
+      reviewBadge.style.display = flags.reviewPerfect ? 'inline-flex' : 'none';
+    }
+
+    function openLesson(idx) {
+      const now = new Date();
+      const released = !sessions[idx].release || now >= sessions[idx].release;
+      if (!released) {
+        alert('この回はまだ配信前です。公開までお待ちください。');
+        return;
+      }
+      cover.classList.remove('active');
+      lesson.classList.add('active');
+      document.getElementById('lessonTitle').textContent = `第${idx+1}回：〇✕問題（5問）`;
+      const body = document.getElementById('lessonBody');
+      body.innerHTML = '';
+
+      const prev = answersRecord[idx] || {};
+
+      sessions[idx].questions.forEach((item, qi)=>{
+        const div = document.createElement('div');
+        div.className = 'question';
+        div.innerHTML = `<p>${qi+1}. ${item.q}</p>`;
+        const opts = document.createElement('div');
+        opts.className = 'options';
+
+        ['〇','✕'].forEach(opt=>{
+          const btn = document.createElement('button');
+          btn.className = 'opt-btn';
+          btn.textContent = opt;
+          if(prev[qi]){
+            if(opt===normalize(prev[qi])) btn.classList.add('clicked');
+          }
+          btn.addEventListener('click', ()=>{
+            opts.querySelectorAll('.opt-btn').forEach(b=>{ b.classList.remove('clicked','wrong','correct'); });
+            btn.classList.add('clicked');
+          });
+          opts.appendChild(btn);
+        });
+
+        div.appendChild(opts);
+        body.appendChild(div);
+      });
+
+      const complete = document.createElement('button');
+      complete.className = 'btn';
+      complete.textContent = '💮 完了（判定）';
+      complete.onclick = ()=>{
+        const rec = {};
+        const qs = body.querySelectorAll('.question');
+        let answered = 0;
+        qs.forEach((qDiv,qi)=>{
+          const chosen = qDiv.querySelector('.opt-btn.clicked');
+          const correctAns = sessions[idx].questions[qi].ans;
+          qDiv.querySelectorAll('.opt-btn').forEach(b=>{ b.classList.remove('wrong','correct'); });
+          if(chosen){
+            answered++;
+            rec[qi] = chosen.textContent;
+            if(normalize(chosen.textContent) === normalize(correctAns)){
+              chosen.classList.add('correct');
+            } else {
+              chosen.classList.add('wrong');
+            }
+          }
+        });
+        answersRecord[idx] = rec;
+        progress[idx] = progress[idx] || (answered === sessions[idx].questions.length);
+        save();
+      };
+      body.appendChild(complete);
+
+      document.getElementById('backLink').onclick = (e)=>{ e.preventDefault(); backToCover(); };
+    }
+
+    function openReview() {
+      if(reviewBtn.disabled) return;
+      cover.classList.remove('active');
+      review.classList.add('active');
+      const body = document.getElementById('reviewBody');
+      body.innerHTML = '';
+
+      let problems = sessions.flatMap(s=>s.questions).map((q,i)=>({ ...q, idx:i+1 }));
+      problems = problems.sort(()=>Math.random()-0.5);
+
+      problems.forEach((item, i)=>{
+        const div = document.createElement('div');
+        div.className = 'question';
+        div.innerHTML = `<p>${i+1}. ${item.q}</p>`;
+        const opts = document.createElement('div');
+        opts.className = 'options';
+        ['〇','✕'].forEach(opt=>{
+          const btn = document.createElement('button');
+          btn.className = 'opt-btn';
+          btn.textContent = opt;
+          btn.addEventListener('click', ()=>{
+            opts.querySelectorAll('.opt-btn').forEach(b=>{ b.classList.remove('clicked','wrong','correct'); });
+            btn.classList.add('clicked');
+          });
+          opts.appendChild(btn);
+        });
+        div.appendChild(opts);
+        body.appendChild(div);
+      });
+
+      const complete = document.createElement('button');
+      complete.className = 'btn';
+      complete.textContent = '💮 判定（40問）';
+      complete.onclick = ()=>{
+        const qs = body.querySelectorAll('.question');
+        let answered = 0;
+        let allCorrect = true;
+        qs.forEach((qDiv,qi)=>{
+          const chosen = qDiv.querySelector('.opt-btn.clicked');
+          const correctAns = problems[qi].ans;
+          qDiv.querySelectorAll('.opt-btn').forEach(b=>{ b.classList.remove('wrong','correct'); });
+          if(chosen){
+            answered++;
+            if(normalize(chosen.textContent) === normalize(correctAns)){
+              chosen.classList.add('correct');
+            } else {
+              chosen.classList.add('wrong');
+              allCorrect = false;
+            }
+          } else {
+            allCorrect = false;
+          }
+        });
+        if(answered === problems.length && allCorrect){
+          flags.reviewPerfect = true;
+          save();
+          alert('総復習 100% 達成！🌸\nカバーにバッジを表示しました。');
+        }
+      };
+      body.appendChild(complete);
+
+      document.getElementById('backLink2').onclick = (e)=>{ e.preventDefault(); backTo
