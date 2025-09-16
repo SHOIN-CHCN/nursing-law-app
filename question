@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>松蔭大学看護学部　看護関係法令</title>
+  <style>
+    :root {
+      --cover-bg: #FFF9C4; /* 薄い黄色 */
+      --ink: #222;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --radius: 20px;
+      --wrong: #dc2626;   /* 赤（不正解） */
+      --correct: #16a34a; /* 緑（正解） */
+      --pending: #dbeafe; /* 選択中の淡青 */
+      --pending-ring: rgba(37,99,235,.35);
+      --title-color: #38bdf8; /* 水色 */
+    }
+    *{box-sizing:border-box}
+    html, body { height: 100%; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", Helvetica, Arial; margin: 0; background: #f8fafc; color: var(--ink); }
+
+    .wrap { min-height: 100vh; display: flex; }
+    .container { flex: 1; display: flex; align-items: stretch; justify-content: center; padding: 16px; }
+    .stage { width: 100%; max-width: 860px; display: grid; }
+
+    .screen { display: none; }
+    .screen.active { display: grid; }
+
+    /* Cover */
+    .cover { background: var(--cover-bg); border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.06);
+      padding: clamp(20px, 6vw, 48px); grid-template-rows: auto 1fr auto; display: grid; min-height: calc(100vh - 32px); row-gap: clamp(16px, 4vw, 28px); }
+
+    .title { font-size: clamp(26px, 6.5vw, 38px); font-weight: 800; margin: 0; text-align: center; color: var(--title-color); line-height: 1.5; }
+    .title span { display: block; }
+
+    .stamp-note { font-weight: 700; margin: 4px 0 4px; font-size: clamp(13px, 3.2vw, 15px); text-align:center; }
+    .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(8px, 2vw, 16px); background: rgba(255,255,255,0.7); border: 1px dashed rgba(0,0,0,0.15); border-radius: 12px; padding: clamp(10px, 2.6vw, 16px); }
+    .stamp { font-size: clamp(20px, 6vw, 32px); text-align: center; filter: grayscale(1) opacity(.35); transition: .2s; }
+    .stamp.active { filter: none; transform: scale(1.05); }
+
+    .lesson-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(10px, 2.6vw, 16px); }
+    @media (min-width: 640px) { .lesson-buttons { grid-template-columns: repeat(4, 1fr); } }
+
+    .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--card); padding: clamp(12px, 3vw, 18px); border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; font-size: clamp(14px, 3.4vw, 16px); min-height: 48px; }
+    .btn:hover { background: #f9fafb; }
+    .btn:disabled { background: #e5e7eb; cursor: not-allowed; color: #9ca3af; }
+
+    /* Panels */
+    .panel { background:#fff; border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,.08); border:1px solid rgba(0,0,0,.06); padding: clamp(16px, 4vw, 28px); min-height: calc(100vh - 32px); display:grid; grid-template-rows:auto 1fr auto; row-gap: clamp(12px, 3vw, 20px); }
+    .crumbs { font-size: clamp(13px, 3vw, 15px); margin-bottom: 6px; color: var(--muted); }
+    .panel h2 { margin: 0 0 8px; font-size: clamp(20px, 5vw, 26px); }
+
+    .question { padding: 12px; border-radius: 10px; margin-bottom: 10px; background:#f9fafb; }
+    .options { display:flex; gap:12px; margin-top:8px; }
+    .opt-btn { flex:1; padding:10px; border-radius:8px; border:1px solid rgba(0,0,0,0.15); background:#fff; cursor:pointer; font-weight:700; text-align:center; }
+    .opt-btn.clicked { background: var(--pending); outline: 2px solid var(--pending-ring); }
+    .opt-btn.wrong { background: var(--wrong); color:#fff; }
+    .opt-btn.correct { background: var(--correct); color:#fff; }
+
+    .review-line { display:flex; align-items:center; justify-content:center; gap:8px; margin-top: 10px; }
+    .badge { display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; border-radius: 999px; background:#ecfdf5; color:#065f46; font-weight: 800; border:1px solid #a7f3d0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="container">
+      <div class="stage">
+
+        <!-- Cover -->
+        <section id="cover" class="screen active">
+          <div class="cover">
+            <h1 class="title">
+              <span>松蔭大学看護学部</span>
+              <span>看護関係法令</span>
+            </h1>
+
+            <div class="stamp-note">スタンプ（全8回分）</div>
+            <div class="stamp-grid" id="stampRow"></div>
+
+            <div class="lesson-buttons" id="lessonGrid"></div>
+            <div class="review-line">
+              <button id="reviewBtn" class="btn">📚 総復習ページへ</button>
+              <span id="reviewBadge" class="badge" style="display:none;">100%達成🌸</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lesson -->
+        <section id="lesson" class="screen">
+          <div class="panel">
+            <div>
+              <div class="crumbs">← <a href="#" id="backLink">表紙にもどる</a></div>
+              <h2 id="lessonTitle"></h2>
+            </div>
+            <div id="lessonBody"></div>
+          </div>
+        </section>
+
+        <!-- Review -->
+        <section id="review" class="screen">
+          <div class="panel">
+            <div>
+              <div class="crumbs">← <a href="#" id="backLink2">表紙にもどる</a></div>
+              <h2>総復習ページ（40問）</h2>
+            </div>
+            <div id="reviewBody"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 8;
+    const STORAGE_KEY = 'nursingLawProgress.v22';
+    let progress = loadProgress();
+    let answersRecord = loadAnswers();
+    let flags = loadFlags();
+
+    const stampRow = document.getElementById('stampRow');
+    const lessonGrid = document.getElementById('lessonGrid');
+    const cover = document.getElementById('cover');
+    const lesson = document.getElementById('lesson');
+    const review = document.getElementById('review');
+    const reviewBtn = document.getElementById('reviewBtn');
+    const reviewBadge = document.getElementById('reviewBadge');
+
+    const normalize = s => (s === '○') ? '〇' : s;
+
+    /* ===== 各回の問題と配信開始日時（JST） ===== */
+    const sessions = [
+      { release: new Date('2025-09-22T13:05:00+09:00'), questions: [
+        { q:'日本の法の大部分は文字で表すことができる成文法である', ans:'〇' },
+        { q:'保健師助産師看護師法は公法であり、実体法である', ans:'✕' },
+        { q:'法のうち憲法は唯一最高のものである', ans:'〇' },
+        { q:'保健師助産師看護師法は保健衛生法である', ans:'✕' },
+        { q:'看護行政については医政局の看護課が担当している', ans:'〇' },
+      ]},
+      { release: new Date('2025-09-29T13:05:00+09:00'), questions: [
+        { q:'看護師免許を付与するのは都道府県知事である', ans:'✕' },
+        { q:'保健師は名称独占である', ans:'〇' },
+        { q:'業務従事者届は2年ごとに都道府県知事に届け出る', ans:'〇' },
+        { q:'看護師・保健師・准看護師の守秘義務は刑法に定められている', ans:'✕' },
+        { q:'都道府県ナースセンターの事業として訪問看護業務がある', ans:'✕' },
+      ]},
+      { release: new Date('2025-10-06T13:05:00+09:00'), questions: [
+        { q:'医療法は医療提供の理念を定めている', ans:'〇' },
+        { q:'授産所は医療法に基づく医療提供施設である', ans:'✕' },
+        { q:'医療事故が発生した場合には医療安全支援センターへ報告する', ans:'〇' },
+        { q:'医療計画は都道府県が定める', ans:'✕' },
+        { q:'臓器の移植に関する法律において脳死臓器提供が可能になるのは15歳からである', ans:'✕' },
+      ]},
+      { release: new Date('2025-10-20T13:05:00+09:00'), questions: [
+        { q:'医師法において相対的欠格事由は未成年者であること', ans:'✕' },
+        { q:'診断書の交付は医師あるいは歯科医師にしかできない', ans:'〇' },
+        { q:'薬剤師は処方箋の内容を処方した医師等に確認せずに変更できる', ans:'✕' },
+        { q:'診療放射線技師はエックス線写真に基づく診断ができる', ans:'✕' },
+        { q:'介護福祉士は一定の条件を満たす場合に喀痰吸引を実施できる', ans:'〇' },
+      ]},
+      { release: new Date('2025-10-27T13:05:00+09:00'), questions: [
+        { q:'麻薬は医薬品医療機器等法による規制対象である', ans:'✕' },
+        { q:'危険ドラッグ等は指定薬物に該当する', ans:'〇' },
+        { q:'劇薬の容器には黒字に白枠・白地で品名と「劇」の文字を表示する', ans:'〇' },
+        { q:'薬局の開設は市町村の許可をうける', ans:'✕' },
+        { q:'薬剤師は麻薬施用者の免許を取得できない', ans:'〇' },
+      ]},
+      { release: new Date('2025-11-10T13:05:00+09:00'), questions: [
+        { q:'母子保健法に基づく届け出は出生届である', ans:'✕' },
+        { q:'母体保護法には受胎調節の実施指導について記載されている', ans:'〇' },
+        { q:'児童相談所は母親を一時保護する機能をもつ', ans:'✕' },
+        { q:'障害者基本法の目的は障害者の保護である', ans:'✕' },
+        { q:'障害者総合支援法の介護給付費は市町村の支給決定を受けなければならない', ans:'〇' },
+      ]},
+      { release: new Date('2025-11-17T13:05:00+09:00'), questions: [
+        { q:'後期高齢者医療保険制度の保険者は後期高齢者医療広域連合である', ans:'〇' },
+        { q:'介護保険の第一号被保険者は40歳以上の者である', ans:'✕' },
+        { q:'要介護認定は主治医意見書と認定調査を基に介護認定審査会で判定される', ans:'〇' },
+        { q:'利用者負担はすべての人が一律3割である', ans:'✕' },
+        { q:'地域包括支援センターは都道府県が設置する', ans:'✕' },
+      ]},
+      { release: new Date('2025-12-01T13:05:00+09:00'), questions: [
+        { q:'労働基準法における法定労働時間は、1日8時間・週40時間である', ans:'〇' },
+        { q:'労働安全衛生法において事業者は労働者に対し年1回以上の定期健康診断を行う義務がある', ans:'〇' },
+        { q:'通勤途上の災害は労災保険の対象にならない', ans:'✕' },
+        { q:'男女雇用機会均等法では募集・採用において、性別を理由に差別してはならない。', ans:'〇' },
+        { q:'育児・介護休業法において育児休業は子が3歳になるまで必ず取得できる', ans:'✕' },
+      ]},
+    ];
+
+    /* ===== LocalStorage I/O ===== */
+    function loadProgress() {
+      try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return Array(TOTAL).fill(false); const arr = JSON.parse(raw); if (Array.isArray(arr) && arr.length === TOTAL) return arr.map(Boolean); } catch {}
+      return Array(TOTAL).fill(false);
+    }
+    function loadAnswers(){ try{ const raw = localStorage.getItem(STORAGE_KEY+"_answers"); if(!raw) return {}; return JSON.parse(raw);}catch{} return {}; }
+    function loadFlags(){ try{ const raw = localStorage.getItem(STORAGE_KEY+"_flags"); if(!raw) return { reviewPerfect:false }; return JSON.parse(raw);}catch{} return { reviewPerfect:false }; }
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); localStorage.setItem(STORAGE_KEY+"_answers", JSON.stringify(answersRecord)); localStorage.setItem(STORAGE_KEY+"_flags", JSON.stringify(flags)); render(); }
+
+    /* ===== Cover Rendering ===== */
+    function renderStamps() {
+      stampRow.innerHTML = '';
+      for (let i = 0; i < TOTAL; i++) {
+        const span = document.createElement('span');
+        span.className = 'stamp' + (progress[i] ? ' active' : '');
+        span.textContent = '💮';
+        stampRow.appendChild(span);
+      }
+    }
+
+    function renderButtons() {
+      lessonGrid.innerHTML = '';
+      const now = new Date();
+      for (let i = 0; i < TOTAL; i++) {
+        const a = document.createElement('a');
+        a.className = 'btn';
+        a.textContent = `📘 第${i+1}回`;
+        a.href = '#';
+        const released = !sessions[i].release || now >= sessions[i].release;
+        if (!released) a.disabled = true;
+        a.addEventListener('click', (e)=>{
+          e.preventDefault();
+          openLesson(i);
+        });
+        lessonGrid.appendChild(a);
+      }
+    }
+
+    function renderReviewButton() {
+      reviewBtn.disabled = !progress.every(Boolean);
+      reviewBadge.style.display = flags.reviewPerfect ?
