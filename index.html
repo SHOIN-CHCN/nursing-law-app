@@ -75,7 +75,7 @@
               <span>看護関係法令</span>
             </h1>
 
-            <div class="stamp-note">スタンプ（全8回分）</div>
+            <div class="stamp-note"></div>
             <div class="stamp-grid" id="stampRow"></div>
 
             <div class="lesson-buttons" id="lessonGrid"></div>
@@ -226,13 +226,15 @@
         const a=document.createElement('a');
         a.className='btn';
         a.textContent=`📘 第${i+1}回`;
-        a.href='#';
         const released=!sessions[i].release || now>=sessions[i].release;
-        if(!released) a.disabled=true;
-        a.addEventListener('click',(e)=>{e.preventDefault();openLesson(i);});
-        lessonGrid.appendChild(a);
-      }
+        if(!released) {
+      a.setAttribute('aria-disabled','true'); }else{
+      a.href='#';
+      a.addEventListener('click',(e)=>{e.preventDefault();openLesson(i);});
     }
+    lessonGrid.appendChild(a);
+  }
+}
     function renderReviewButton(){
       // 総復習は 8回すべて💮（= 全問回答）で有効化
       reviewBtn.disabled=!progress.every(Boolean);
